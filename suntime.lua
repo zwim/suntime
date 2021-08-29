@@ -31,9 +31,8 @@ end
 SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
---local refract = 1013*.5^(500/5500)/1013*36.6 + 31.5/2; -- 500m Meereshöhe + Sonnendurchmesser
-local refract = 49
-SunTime.eod = Rad(-refract/60) -- end of day
+--local refract = 1013*.5^(500/5500)/1013*36 + 31.5/2; -- 500m Meereshöhe + Sonnendurchmesser
+-- SunTime.eod = Rad(-49/60) -- approx. end of day
 
 -- simple 'Equation of time' good for dates between 2008-2027
 -- errors for latitude 20° are within 1min
@@ -58,9 +57,11 @@ function SunTime:getZglAdvanced()
 
     local M = self.M
     -- https://de.wikibooks.org/wiki/Astronomische_Berechnungen_f%C3%BCr_Amateure/_Himmelsmechanik/_Sonne
-    local C = (2*e-e3/4)*sin(M) + 5/4*e2*sin(2*M)
-            + (13/12*e3 - 43/64*e5)*sin(3*M) + 103/96*e4*sin(4*M)
-            + 1097/960*e5* sin(5*M) -- rad
+    local C = (2*e - e3/4 + 5/96*e5) * sin(M)
+            + (5/4*e2 + 11/24*e4) * sin(2*M)
+            + (13/12*e3 - 43/64*e5) * sin(3*M)
+            + 103/96*e4 * sin(4*M)
+            + 1097/960*e5 * sin(5*M) -- rad
 
     local lamb = self.L + C
     local tanL = tan(self.L)
@@ -122,7 +123,9 @@ function SunTime:setPosition(name, latitude, longitude, time_zone)
         return
     end
 
-    if self.date then self.date.year = -1 end --invalidate cache
+    if self.date then
+        self.olddate.year = -1
+    end --invalidate cache
     self.name = name
     self.pos = {latitude = latitude, longitude = longitude}
     self.time_zone = time_zone
@@ -138,8 +141,8 @@ end
 function SunTime:daysSince2000()
     local delta = self.date.year - 2000
     local leap = floor(delta/4) + 1 -- +1 for 2000, which was a leap year
-    self.days_since_2000 = delta * 365 + leap + self.date.yday + self.date.hour/24 -- WMO No.8
-    return self.days_since_2000
+    local days_since_2000 = delta * 365 + leap + self.date.yday    -- WMO No.8
+    return days_since_2000
 end
 
 -- more accurate parameters of earth orbit from_
@@ -147,8 +150,8 @@ end
 -- Authors: Simon, J. L., Bretagnon, P., Chapront, J., Chapront-Touze, M., Francou, G., & Laskar, J., ,
 -- Journal: Astronomy and Astrophysics (ISSN 0004-6361), vol. 282, no. 2, p. 663-683
 -- Bibliographic Code: 1994A&A...282..663S
-    function SunTime:initVars()
-    self:daysSince2000()
+function SunTime:initVars()
+    self.days_since_2000 = self:daysSince2000()
     local T = self.days_since_2000/36525
 --    self.num_ex = 0.016709 - 0.000042 * T
 --    self.num_ex = 0.0167086342 - 0.000042 * T
