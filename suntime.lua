@@ -31,10 +31,10 @@ SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
 local refract = Rad(33/60 * .5^(500/5500))  -- 500m Meereshöhe
+local evening_temp= { 0, 0, 4, 8, 13, 17, 19, 19, 14, 11, 4, 0 }
 -- SunTime.eod = Rad(-49/60) -- approx. end of day
 
 ----------------------------------------------------------------
-
 
 -- simple 'Equation of time' good for dates between 2008-2027
 -- errors for latitude 20° are within 1min
@@ -289,7 +289,7 @@ function SunTime:calculateTimes()
     self.midnight = self.noon + 12
 
     self.times = {}
-    self.times[1]  = self.midnight
+    self.times[1]  = self.noon - 12
     self.times[2]  = self.rise_astronomic
     self.times[3]  = self.rise_nautic
     self.times[4]  = self.rise_civil
