@@ -30,8 +30,6 @@ local SunTime = {}
 SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
-local refract = Rad(33/60 * .5^(500/5500))  -- 500m Meereshöhe
-local evening_temp= { 0, 0, 4, 8, 13, 17, 19, 19, 14, 11, 4, 0 }
 -- SunTime.eod = Rad(-49/60) -- approx. end of day
 
 ----------------------------------------------------------------
@@ -119,18 +117,13 @@ function SunTime:setDate(year, month, day, dst, hour, min, sec)
     self.zgl = self:getZgl()
 end
 
-function SunTime:setPosition(name, latitude, longitude, time_zone)
-    if self.name == name and self.pos.latitude == latitude and self.pos.longitude == longitude
-        and self.time_zone == time_zone then
-        return
-    end
+function SunTime:setPosition(name, latitude, longitude, time_zone, altitude)
+    altitude = altitude or 200
 
-    if self.olddate then
-        self.olddate.year = -1
-    end --invalidate cache
-    self.name = name
-    self.pos = {latitude = latitude, longitude = longitude}
+    self.oldDate = nil --invalidate cache
+    self.pos = {name, latitude = latitude, longitude = longitude, altitude = altitude}
     self.time_zone = time_zone
+    self.refract = Rad(33/60 * .5 ^ (altitude / 5500))
 end
 
 function SunTime:setSimple()
@@ -142,7 +135,7 @@ end
 
 function SunTime:daysSince2000()
     local delta = self.date.year - 2000
-    local leap = floor(delta/4) -- +1 for 2000, which was a leap year
+    local leap = floor(delta/4)
     local days_since_2000 = delta * 365 + leap + self.date.yday    -- WMO No.8
     return days_since_2000
 end
@@ -169,8 +162,7 @@ function SunTime:initVars()
                 + T*(-0.00000051 - T*0.00000025)))))/3600 --°
     self.epsilon = epsilon * toRad
 
---    local L = (280.4656 + 36000.7690 * T ) --°
-
+    --    local L = (280.4656 + 36000.7690 * T ) --°
     -- see Numerical expressions for precession formulae ...
     -- shift from time to Equinox as data is given for JD2000.0, but date is in days from 20000101
     local nT = T * 1.0000388062
@@ -235,7 +227,7 @@ function SunTime:initVars()
     self.a = 149598022.96E3 -- große Halbaches in m
     self.r = self.a * (1 - self.num_ex * cos(self.E))
 --    self.eod = -atan(6.96342e8/self.r) - Rad(33.3/60) -- without nutation
-    self.eod = -atan(6.96342e8/self.r) - refract -- with nutation
+    self.eod = -atan(6.96342e8/self.r) - self.refract -- with nutation
 --                ^--sun radius                ^- astronomical refraction (500m altitude)
 end
 --------------------------
