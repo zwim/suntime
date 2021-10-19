@@ -31,6 +31,7 @@ SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
 -- SunTime.eod = Rad(-49/60) -- approx. end of day
+SunTime.earth_flatten = 1 / 298.257223563 --WGS84
 
 ----------------------------------------------------------------
 
@@ -145,8 +146,8 @@ end
 -- Authors: Simon, J. L., Bretagnon, P., Chapront, J., Chapront-Touze, M., Francou, G., & Laskar, J., ,
 -- Journal: Astronomy and Astrophysics (ISSN 0004-6361), vol. 282, no. 2, p. 663-683
 -- Bibliographic Code: 1994A&A...282..663S
-function SunTime:initVars()
-    self.days_since_2000 = self:daysSince2000(12) + 0.25
+function SunTime:initVars(hour)
+    self.days_since_2000 = self:daysSince2000(hour)
     local T = self.days_since_2000/36525
 --    self.num_ex = 0.016709     - 0.000042 * T
 --    self.num_ex = 0.0167086342 - 0.000042 * T
@@ -164,20 +165,16 @@ function SunTime:initVars()
 
     --    local L = (280.4656 + 36000.7690 * T ) --°
     -- see Numerical expressions for precession formulae ...
-    -- shift from time to Equinox as data is given for JD2000.0, but date is in days from 20000101
---    local nT = T * 1.0000388062
-local nT = T
-
     --mean longitude
-    local L = 100.46645683 + (nT*(1295977422.83429E-1
-            + nT*(-2.04411E-2 - nT* 0.00523E-3)))/3600--°
+    local L = 100.46645683 + (T*(1295977422.83429E-1
+            + T*(-2.04411E-2 - T* 0.00523E-3)))/3600--°
     self.L = (L - floor(L/360)*360) * toRad
 
     -- wikipedia: https://de.wikipedia.org/wiki/Erdbahn-> Meeus
-    local omega =    102.93734808     + nT*(17.194598028e-1
-                + nT*( 0.045688325e-2 + nT*(-0.000017680e-3
-                + nT*(-0.000033583e-4 + nT*( 0.000000828e-5
-                + nT*  0.000000056e-6))))) --°
+    local omega =    102.93734808    + T*(17.194598028e-1
+                + T*( 0.045688325e-2 + T*(-0.000017680e-3
+                + T*(-0.000033583e-4 + T*( 0.000000828e-5
+                + T*  0.000000056e-6))))) --°
 
     -- Mittlere Länage
     local M = L - omega
@@ -211,11 +208,11 @@ local nT = T
     local A = { 2.18243920 - 33.7570460 * T,
                -2.77624462 + 1256.66393 * T,
                 7.62068856 + 16799.4182 * T,
-                4.36487839 - 67.140919 * T}
+                4.36487839 - 67.140919  * T}
     local B = {92025e-4 + 8.9e-4 * T,
-               5736e-4 - 3.1e-4 * T,
-                977e-4 - 0.5e-4 * T,
-               -895e-4 + 0.5e-4 * T}
+                5736e-4 - 3.1e-4 * T,
+                 977e-4 - 0.5e-4 * T,
+                -895e-4 + 0.5e-4 * T}
     local delta_epsilon = 0
     for i = 1, #A do
         delta_epsilon = delta_epsilon + B[i]*cos(A[i])
@@ -265,6 +262,11 @@ function SunTime:calculateTime(height, hour)
 end
 
 function SunTime:calculateTimeIter(height, hour)
+    self:initVars(hour)
+    self.zgl = self:getZgl()
+    hour = self:calculateTime(height, hour)
+    self:initVars(hour)
+    self.zgl = self:getZgl()
     return self:calculateTime(height, hour)
 end
 
