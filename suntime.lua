@@ -133,11 +133,11 @@ function SunTime:setAdvanced()
     self.getZgl = self.getZglAdvanced
 end
 
-function SunTime:daysSince2000()
+function SunTime:daysSince2000(hour)
+    if not hour then hour = 12 end
     local delta = self.date.year - 2000
     local leap = floor(delta/4)
-    local days_since_2000 = delta * 365 + leap + self.date.yday    -- WMO No.8
-    return days_since_2000
+    return delta * 365 + leap + self.date.yday + (hour-12)/24   -- WMO No.8
 end
 
 -- more accurate parameters of earth orbit from
@@ -146,9 +146,9 @@ end
 -- Journal: Astronomy and Astrophysics (ISSN 0004-6361), vol. 282, no. 2, p. 663-683
 -- Bibliographic Code: 1994A&A...282..663S
 function SunTime:initVars()
-    self.days_since_2000 = self:daysSince2000()
+    self.days_since_2000 = self:daysSince2000(12) + 0.25
     local T = self.days_since_2000/36525
---    self.num_ex = 0.016709 - 0.000042 * T
+--    self.num_ex = 0.016709     - 0.000042 * T
 --    self.num_ex = 0.0167086342 - 0.000042 * T
     -- see wikipedia: https://de.wikipedia.org/wiki/Erdbahn-> Meeus
     self.num_ex =     0.0167086342     + T*(-0.0004203654e-1
@@ -165,7 +165,9 @@ function SunTime:initVars()
     --    local L = (280.4656 + 36000.7690 * T ) --°
     -- see Numerical expressions for precession formulae ...
     -- shift from time to Equinox as data is given for JD2000.0, but date is in days from 20000101
-    local nT = T * 1.0000388062
+--    local nT = T * 1.0000388062
+local nT = T
+
     --mean longitude
     local L = 100.46645683 + (nT*(1295977422.83429E-1
             + nT*(-2.04411E-2 - nT* 0.00523E-3)))/3600--°
@@ -228,7 +230,7 @@ function SunTime:initVars()
     self.r = self.a * (1 - self.num_ex * cos(self.E))
 --    self.eod = -atan(6.96342e8/self.r) - Rad(33.3/60) -- without nutation
     self.eod = -atan(6.96342e8/self.r) - self.refract -- with nutation
---                ^--sun radius                ^- astronomical refraction (500m altitude)
+--                ^--sun radius                ^- astronomical refraction (at altitude)
 end
 --------------------------
 
