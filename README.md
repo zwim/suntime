@@ -30,7 +30,7 @@ See `test.lua` for an example
 
 5.) Use the calculated times
 
-Times are decimal hours, so `12.5` is `12:30:00`
+Times are decimal hours, so `12.5` is `12:30:00` or `nil`
 
 ```
     self.rise
