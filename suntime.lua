@@ -1,16 +1,16 @@
 --[[--
 Module to calculate ephemeris and other times depending on the sun position
 
-Maximal errors from 2020-2100 are:
+Maximal errors from 2020-2050 are:
 longitude   error
-33.58°      95s (Casablanca)
-37.97°      107s (Athene)
-41.91°      120s (Rome)
-47.25°      131s (Innsbruck)
-52.32°      160s (Berlin)
-64.14°      252s (Reykjavik)
-65.69°      696s (Akureyri)
-70.67°      5000s (Hammerfest)
+33.58°      24s (Casablanca)
+37.97°      25s (Athene)
+41.91°      28s (Rome)
+47.25°      14s (Innsbruck)
+52.32°      32s (Berlin)
+64.14°      113s (Reykjavik)
+65.69°      530s (Akureyri)
+70.67°      4960s (Hammerfest)
 
 @usage
     time_zone = 0
@@ -175,7 +175,7 @@ end
 
 function SunTime:daysSince2000(hour)
     local delta = self.date.year - 2000
-    local leap = floor(delta/4)
+    local leap = floor((delta-1)/4)
     return delta * 365 + leap + self.date.yday + (hour-12)/24   -- WMO No.8
 end
 
