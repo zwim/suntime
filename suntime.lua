@@ -1,11 +1,31 @@
+--[[--
+Module to calculate ephemeris and other times depending on the sun position
 
--- usage
--- SunTime:setPosition()
--- SunTime:setSimple() or SunTime:setAdvanced()
--- SunTime:setDate()
--- SunTime:calculate(height, hour)  height==Rad(0°)-> Midday; hour=6 or 18 for rise or set
--- SunTime:calculateTimes()
--- use values
+Maximal errors from 2020-2100 are:
+longitude   error
+33.58°      95s (Casablanca)
+37.97°      107s (Athene)
+41.91°      120s (Rome)
+47.25°      131s (Innsbruck)
+52.32°      160s (Berlin)
+64.14°      252s (Reykjavik)
+65.69°      696s (Akureyri)
+70.67°      5000s (Hammerfest)
+
+@usage
+    time_zone = 0
+    altitude = 50
+    degree = true
+    SunTime:setPosition("Reykjavik", 64.14381, -21.92626, timezone, altitude, degree)
+
+    SunTime:setAdvanced()
+
+    SunTime:setDate()
+
+    SunTime:calculateTimes()
+
+    print(SunTime.rise, SunTime.set, SunTime.set_civil) -- or similar see calculateTime()
+--]]--
 
 -- math abbrevations
 local toRad = math.pi/180
@@ -31,7 +51,8 @@ SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
 -- SunTime.eod = Rad(-49/60) -- approx. end of day
-SunTime.earth_flatten = 0 -- todo 1 / 298.257223563 -- WGS84
+SunTime.earth_flatten = 0 -- toDo  1 / 298.257223563 -- WGS84
+SunTime.average_temperature = 10 -- °C
 
 ----------------------------------------------------------------
 
@@ -104,18 +125,50 @@ function SunTime:setDate(year, month, day, dst, hour, min, sec)
     end
 end
 
-function SunTime:setPosition(name, latitude, longitude, time_zone, altitude)
+--[[--
+Set position for later calculations
+
+@param name Name of the location
+@param latitude Geographical latitude, North is positive
+@param longitude Geographical longitude, West is negative
+@param time_zone Timezone e.g. CET = +1
+@param altitude Altitude of the location above the sea level
+@param degree if `nil` latitude and longitue are in radian, else in decimal degree
+ --]]--
+function SunTime:setPosition(name, latitude, longitude, time_zone, altitude, degree)
     altitude = altitude or 200
+    if degree then
+        latitude = latitude * toRad
+        longitude = longitude * toRad
+    end
+
+    -- check for sane values
+    if latitude > math.pi/2 then
+        latitude = math.pi
+    elseif latitude < - math.pi/2 then
+        latitude = -math.pi
+    end
+    if longitude > math.pi/2 then
+        longitude = math.pi
+    elseif longitude < - math.pi/2 then
+        longitude = -math.pi
+    end
 
     self.pos = {name, latitude = latitude, longitude = longitude, altitude = altitude}
     self.time_zone = time_zone
 --    self.refract = Rad(36.35/60 * .5 ^ (altitude / 5538)) -- constant temperature
-    self.refract = Rad(36.20/60 * (1 - 0.0065*altitude/(273.15+10)) ^ 5.255 )
+    self.refract = Rad(36.20/60 * (1 - 0.0065*altitude/(273.15+self.average_temperature)) ^ 5.255 )
 end
 
+--[[--
+  Use a simple equation of time (valid for the years 2000-2028)
+--]]--
 function SunTime:setSimple()
     self.getZgl = self.getZglSimple
 end
+--[[--
+  Use an advanced equation of time (valid for the years 1800-2200 at least)
+--]]--
 function SunTime:setAdvanced()
     self.getZgl = self.getZglAdvanced
 end
@@ -265,7 +318,7 @@ end
 -- Set hour to 6 for rise or 18 for set
 -- Result rise or set time
 --        nil sun does not reach the height
-function SunTime:calculateTime(height, hour)
+function SunTime:calculateTime(height, hour, after_noon)
     local dst = self.date.isdst and 1 or 0
     local timeDiff = self:getTimeDiff(height, hour)
     if not timeDiff then
@@ -273,22 +326,22 @@ function SunTime:calculateTime(height, hour)
     end
 
     local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
-    if hour < 12 then
+    if not after_noon then
         return 12 - timeDiff + local_correction
-    elseif hour > 12 then
-        return 12 + timeDiff + local_correction
     else
-        return 12 + local_correction -- should not happen?
+        return 12 + timeDiff + local_correction
     end
 end
 
 -- If height is nil, use newly calculated self.eod
 function SunTime:calculateTimeIter(height, hour)
+    local after_noon = hour > 12
+
     self:initVars(hour) -- calculate self.eod
-    hour = self:calculateTime(height or self.eod, hour)
+    hour = self:calculateTime(height or self.eod, hour, after_noon)
     if hour ~= nil then
         self:initVars(hour)  -- calculate self.eod
-        hour = self:calculateTime(height or self.eod, hour)
+        hour = self:calculateTime(height or self.eod, hour, after_noon)
     end
     return hour
 end
@@ -328,6 +381,22 @@ function SunTime:calculateMidnight()
 
 end
 
+--[[--
+Calculates the following times:
+
+* astronomic dawn
+* nautical dawn
+* civil dawn
+* sunrise
+* true noon
+* sunset
+* civil dusk
+* nautical dusk
+* astronomic dusk
+* midnight
+
+Times are in hours or `nil`.
+--]]--
 function SunTime:calculateTimes()
     -- All or some the times can be nil at great latitudes
     -- but either noon or midnight is not nil!
