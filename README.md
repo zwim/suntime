@@ -1,10 +1,10 @@
 # Suntime
 
-Calculate ephemeris
+Calculates ephemeris and different types of twilight depending on your geolocation.
 
 ## Usage
 
-See `test.lua` for an example
+See `test.lua` for an example.
 
 1.) Set your position:
 
@@ -14,7 +14,7 @@ See `test.lua` for an example
 
 2.) Set equation of time
 
-`SunTime:setSimple() -- simple version valid for 2020-2028`
+`SunTime:setSimple() -- simple version valid for 2008-2027`
 
 `SunTime:setAdvanced() -- advanced version valid for the next few hundred years`
 
@@ -30,7 +30,7 @@ See `test.lua` for an example
 
 5.) Use the calculated times
 
-Times are decimal hours, so `12.5` is `12:30:00` or `nil`
+Times are decimal hours, so `12.5` is `12:30:00`. If a time does not exist the value is `nil`.
 
 ```
     self.rise

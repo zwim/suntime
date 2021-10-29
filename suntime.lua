@@ -1,18 +1,25 @@
+
+-- Author: Martin Zwicknagl (zwim)
+-- Date: 2021-10-29
+-- The current source code of this file can be found on https://github.com/zwim/suntime.
+
 --[[--
 Module to calculate ephemeris and other times depending on the sun position
 
 Maximal errors from 2020-2050 are:
-longitude   error
-33.58°      24s (Casablanca)
-37.97°      25s (Athene)
-41.91°      28s (Rome)
-47.25°      14s (Innsbruck)
-52.32°      32s (Berlin)
-64.14°      113s (Reykjavik)
-65.69°      530s (Akureyri)
-70.67°      4960s (Hammerfest)
+
+* 33.58° (Casablanca)   24s
+* 37.97° (Athene)       25s
+* 41.91° (Rome)         28s
+* 47.25° (Innsbruck)    14s
+* 52.32° (Berlin)       32s
+* 64.14° (Reykjavik)   113s
+* 65.69° (Akureyri)    530s
+* 70.67° (Hammerfest) 4960s
 
 @usage
+    local SunTime = require("suntime")
+
     time_zone = 0
     altitude = 50
     degree = true
@@ -25,6 +32,8 @@ longitude   error
     SunTime:calculateTimes()
 
     print(SunTime.rise, SunTime.set, SunTime.set_civil) -- or similar see calculateTime()
+
+@module suntime
 --]]--
 
 -- math abbrevations
@@ -51,7 +60,7 @@ SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
 -- SunTime.eod = Rad(-49/60) -- approx. end of day
-SunTime.earth_flatten = 0 -- toDo  1 / 298.257223563 -- WGS84
+SunTime.earth_flatten = 0 -- toDo 1 / 298.257223563 -- WGS84
 SunTime.average_temperature = 10 -- °C
 
 ----------------------------------------------------------------
@@ -161,7 +170,7 @@ function SunTime:setPosition(name, latitude, longitude, time_zone, altitude, deg
 end
 
 --[[--
-  Use a simple equation of time (valid for the years 2000-2028)
+  Use a simple equation of time (valid for the years 2008-2027)
 --]]--
 function SunTime:setSimple()
     self.getZgl = self.getZglSimple
@@ -173,10 +182,11 @@ function SunTime:setAdvanced()
     self.getZgl = self.getZglAdvanced
 end
 
+
 function SunTime:daysSince2000(hour)
     local delta = self.date.year - 2000
     local leap = floor((delta-1)/4)
-    return delta * 365 + leap + self.date.yday + (hour-12)/24   -- WMO No.8
+    return 365 * delta + leap + self.date.yday + (hour-12)/24   -- WMO No.8, rebased for 2000-01-01 12:00
 end
 
 -- more accurate parameters of earth orbit from
@@ -189,7 +199,7 @@ function SunTime:initVars(hour)
         hour = 12
     end
 
-    local T = self:daysSince2000(hour)/36525 -- in Julian centuries
+    local T = self:daysSince2000(hour)/36525 -- in Julian centuries form 2000-01-01 12:00
 
     --    self.num_ex = 0.0167086342 - 0.000042 * T
     -- numerical eccentricity of earth's orbit
@@ -315,7 +325,8 @@ function SunTime:getTimeDiff(height)
 end
 
 -- Get time for a certain height
--- Set hour to 6 for rise or 18 for set
+-- Set hour near to expected time
+-- Sed after_noon to true, if sunset is wanted
 -- Result rise or set time
 --        nil sun does not reach the height
 function SunTime:calculateTime(height, hour, after_noon)
@@ -364,7 +375,9 @@ function SunTime:calculateNoon()
 end
 
 function SunTime:calculateMidnight()
-    self:initVars(00)
+    -- 24 is the midnight at the end of the current day,
+    -- 00 would be the beginning of the day
+    self:initVars(24)
     if self.pos.latitude >= 0 then -- northern hemisphere
         if math.pi/2 - self.pos.latitude - self.decl > self.eod then
             local dst = self.date.isdst and 1 or 0
@@ -382,20 +395,40 @@ function SunTime:calculateMidnight()
 end
 
 --[[--
-Calculates the following times:
+Calculates the ephemeris ant twilight times
 
-* astronomic dawn
-* nautical dawn
-* civil dawn
-* sunrise
-* true noon
-* sunset
-* civil dusk
-* nautical dusk
-* astronomic dusk
-* midnight
+@usage
+SunTime:calculateTime()
 
-Times are in hours or `nil`.
+Times are in hours or `nil` if not applicable.
+
+You can then access:
+    self.rise_astronomic
+    self.rise_nautic
+    self.rise_civil
+    self.rise
+
+    self.noon
+
+    self.set
+    self.set_civil
+    self.set_nautic
+    self.set_astronomic
+
+    self.midnight
+
+Or as values in a table:
+    self.times[1]  midnight - 24h
+    self.times[2]  rise_astronomic
+    self.times[3]  rise_nautic
+    self.times[4]  rise_civil
+    self.times[5]  rise
+    self.times[6]  noon
+    self.times[7]  set
+    self.times[8]  set_civil
+    self.times[9]  set_nautic
+    self.times[10] set_astronomic
+    self.times[11] midnight
 --]]--
 function SunTime:calculateTimes()
     -- All or some the times can be nil at great latitudes

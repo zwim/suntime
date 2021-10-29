@@ -112,7 +112,7 @@ int do_spa(double latitude, double longitude, int y, int m, int d, int tz, int p
         }
         else
         {
-            printf("spa: %d.%d.%d\t",y, m, d);
+            printf("spa: %04d-%02d-%02d\t",y, m, d);
             min = 60.0*(spa.sunrise - (int)(spa.sunrise));
             sec = 60.0*(min - (int)min);
             printf("spa.rise %02d:%02d:%02d\t", (int)(spa.sunrise), (int)min, (int)sec);
@@ -129,23 +129,3 @@ int do_spa(double latitude, double longitude, int y, int m, int d, int tz, int p
 
     return 0;
 }
-
-/////////////////////////////////////////////
-// The output of this program should be:
-//
-//Julian Day:    2452930.312847
-//L:             2.401826e+01 degrees
-//B:             -1.011219e-04 degrees
-//R:             0.996542 AU
-//H:             11.105902 degrees
-//Delta Psi:     -3.998404e-03 degrees
-//Delta Epsilon: 1.666568e-03 degrees
-//Epsilon:       23.440465 degrees
-//Zenith:        50.111622 degrees
-//Azimuth:       194.340241 degrees
-//Incidence:     25.187000 degrees
-//Sunrise:       06:12:43 Local Time
-//Sunset:        17:20:19 Local Time
-//
-/////////////////////////////////////////////
-
