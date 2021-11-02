@@ -8,14 +8,19 @@ Module to calculate ephemeris and other times depending on the sun position
 
 Maximal errors from 2020-2050 are:
 
-* 33.58° (Casablanca)   24s
-* 37.97° (Athene)       25s
-* 41.91° (Rome)         28s
-* 47.25° (Innsbruck)    14s
-* 52.32° (Berlin)       32s
-* 64.14° (Reykjavik)   113s
-* 65.69° (Akureyri)    530s
-* 70.67° (Hammerfest) 4960s
+* 33.58° Casablanca:   24s
+* 37.97° Athene:       25s
+* 41.91° Rome:         28s
+* 47.25° Innsbruck:    14s
+* 52.32° Berlin:       32s
+* 59.92° Oslo:         39s
+* 64.14° Reykjavik:   113s
+* 65.69° Akureyri:   <110s (except *)
+* 70.67° Hammerfest: <105s (except **)
+
+*) A few days around beginning of summer (error <530s)
+
+**) A few days after and befor midnight sun (error <1200s)
 
 @usage
     local SunTime = require("suntime")
@@ -60,9 +65,10 @@ SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
 -- SunTime.eod = Rad(-49/60) -- approx. end of day
-SunTime.earth_flatten = 0 -- toDo 1 / 298.257223563 -- WGS84
+SunTime.earth_flatten = 1 / 298.257223563 -- WGS84
 SunTime.average_temperature = 10 -- °C
-
+SunTime.aberration = asin(30e3/3e8) -- Aberration relativistic
+--SunTime.aberration = 0
 ----------------------------------------------------------------
 
 -- simple 'Equation of time' good for dates between 2008-2027
@@ -199,6 +205,8 @@ function SunTime:initVars(hour)
         hour = 12
     end
 
+    local after_noon = hour > 12
+
     local T = self:daysSince2000(hour)/36525 -- in Julian centuries form 2000-01-01 12:00
 
     --    self.num_ex = 0.0167086342 - 0.000042 * T
@@ -228,8 +236,7 @@ function SunTime:initVars(hour)
 
     -- see Numerical expressions for precession formulae ...
     -- mean longitude
-    local nT = T * (36000.7690/35999.3720) -- convert date to equinox
-
+    local nT = T * (36000.7690/35999.3720) -- convert from equinox to date
     local L =  100.46645683   + (nT*(1295977422.83429E-1
             + nT*(-2.04411E-2 -  nT* 0.00523E-3)))/3600 --°
     self.L = (L - floor(L/360)*360) * toRad
@@ -288,35 +295,20 @@ function SunTime:initVars(hour)
     self.r = self.a * (1 - self.num_ex * cos(self.E))
 
     self.eod = -atan(6.96342e8/self.r) - self.refract
---                    ^--sun radius                ^- astronomical refraction (at altitude)
+    --                ^--sun radius            ^- astronomical refraction (at altitude)
+
+    if after_noon then
+        self.eod = self.eod + self.aberration
+    else
+        self.eod = self.eod - self.aberration
+    end
 
     self.zgl = self:getZgl()
 end
 
---[[
-function SunTime:getTimeDiff_noflatten(height)
+function SunTime:getTimeDiff(height)
     local val = (sin(height) - sin(self.pos.latitude)*sin(self.decl))
                 / (cos(self.pos.latitude)*cos(self.decl))
-
-    if math.abs(val) > 1 then
-        return
-    end
-    return 12/math.pi * acos(val)
-end
-]]
-
-function SunTime:getTimeDiff(height)
-    -- Project latitude from spherical coordinates onto ellipsoid coordinates
-    -- so that the surface normal vectors are parallel
-    local ffac = 1/(1 - self.earth_flatten)
-    local flattened_latitude
-    if math.abs(self.pos.latitude) ~= math.pi/2 then
-        flattened_latitude = atan(ffac * tan(self.pos.latitude)) -- ffac
-    else
-        flattened_latitude = self.pos.latitude
-    end
-    local val = (sin(height) - sin(flattened_latitude)*sin(self.decl))
-                / (cos(flattened_latitude)*cos(self.decl))
 
     if math.abs(val) > 1 then
         return
@@ -330,13 +322,12 @@ end
 -- Result rise or set time
 --        nil sun does not reach the height
 function SunTime:calculateTime(height, hour, after_noon)
-    local dst = self.date.isdst and 1 or 0
     local timeDiff = self:getTimeDiff(height, hour)
     if not timeDiff then
         return
     end
 
-    local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
+    local local_correction = self.time_zone - self.pos.longitude*12/math.pi - self.zgl
     if not after_noon then
         return 12 - timeDiff + local_correction
     else
@@ -353,6 +344,9 @@ function SunTime:calculateTimeIter(height, hour)
     if hour ~= nil then
         self:initVars(hour)  -- calculate self.eod
         hour = self:calculateTime(height or self.eod, hour, after_noon)
+    end
+    if self.date.isdst and hour then
+        hour = hour + 1
     end
     return hour
 end
@@ -395,7 +389,7 @@ function SunTime:calculateMidnight()
 end
 
 --[[--
-Calculates the ephemeris ant twilight times
+Calculates the ephemeris and twilight times
 
 @usage
 SunTime:calculateTime()
@@ -461,7 +455,7 @@ function SunTime:calculateTimes()
 end
 
 -- Get time in seconds (either actual time in hours or date struct)
-function SunTime:getTimeInSec(val) -- luacheck: ignore 212
+function SunTime:getTimeInSec(val)
     if not val then
         val = os.date("*t")
     end

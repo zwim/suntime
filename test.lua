@@ -9,11 +9,12 @@ local SunTime = require("suntime")
 -- SunTime:setPosition("Casablanca", 33.58, -7.60, 1, 20, true)
 -- SunTime:setPosition("Athene", 37.97, 23.73, 1, 50, true)
 -- SunTime:setPosition("Rome", 41.91, 12.48, 1, 10, true)
- SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
+-- SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
 -- SunTime:setPosition("Berlin", 52.53387/180*math.pi, 13.37955/180*math.pi, 1, 100)
+ SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
 -- SunTime:setPosition("Reykjavik", 64.14381/180*math.pi, -21.92626/180*math.pi, 0, 10)
 -- SunTime:setPosition("Akureyri", 65.6872/180*math.pi, -18.08651/180*math.pi, 0, 0)
--- SunTime:setPosition("Hammerfest", 70.66588, 23.67893, 0, 0, true)
+-- SunTime:setPosition("Hammerfest", 70.66588, 23.67893, 1, 0, true)
 -- SunTime:setPosition("Nordpol", 90/180*math.pi, 11/180*math.pi, 1, 100)
 -- SunTime:setPosition("Südpol", -89.4/180*math.pi, 50/180*math.pi, 1, 100)
 
@@ -132,7 +133,7 @@ else
 
 	local rise_diff_sec = 0
 	local set_diff_sec = 0
-	for y = 2021, 2021 do
+	for y = 2020, 2021 do
 		for m = 1, 12 do
 			for d = 1, dom[m] do
 				local dst = false
@@ -146,8 +147,8 @@ else
 				end
 
 				local retval = os.capture("SPA/spa " .. SunTime.pos.latitude*180/math.pi .. " "
-					.. SunTime.pos.longitude*180/math.pi  .. " "  .. y .. " ".. m .. " " .. d .. " "
-					.. tz .." " .. 1)
+					.. SunTime.pos.longitude*180/math.pi .. " " ..SunTime.pos.altitude .. " "
+					.. y .. " ".. m .. " " .. d .. " " .. tz .." " .. 1)
 				retval = retval:gsub("-99999", "99")
 
 				SunTime:setDate(y, m, d, dst)
@@ -167,13 +168,17 @@ else
 						+ tonumber(tmp:sub(7,8))/3600
 				end
 
-				local diff_rise
+				local diff_rise = 0
 				if spa_rise and SunTime.rise then
 					diff_rise = spa_rise - SunTime.rise
 				end
-				local diff_set
+				local diff_set = 0
 				if spa_set and SunTime.set then
 					diff_set = spa_set - SunTime.set
+				end
+
+				if spa_set < spa_rise then
+					spa_set = spa_set + 24
 				end
 
 				if diff_rise then
@@ -206,7 +211,7 @@ else
 						SunTime.set and (timeHMS(SunTime.set)),
 						SunTime.noon and (timeHMS(SunTime.noon)),
 						SunTime.midnight and (timeHMS(SunTime.midnight)),
-						"Diff/sec:", round(diff_rise*3600), round(diff_set*3600))
+						"Diff/sec: " .. round(diff_rise*3600) .. " " .. round(diff_set*3600))
 				end
 			end
 		end

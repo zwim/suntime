@@ -37,22 +37,23 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "spa.h"  //include the SPA header file
 
-int do_spa(double latitude, double longitude, int y, int m, int d, int tz, int pr);
+int do_spa(double latitude, double longitude, int altitude, int y, int m, int d, int tz, int pr);
 
 int main (int argc, char *argv[])
 {
-    if (argc > 6)
-        return do_spa(atof(argv[1]), atof(argv[2]),
-            atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]));
+    if (argc > 7)
+        return do_spa(atof(argv[1]), atof(argv[2]), atoi(argv[3]),
+        atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]), atoi(argv[8]));
     else
-        return do_spa(47.25786, 11.35111, 2021, 1, 17, 2, 1);
+        return do_spa(47.25786, 11.35111, 520, 2021, 1, 17, 2, 1);
 }
 
 
 
-int do_spa(double latitude, double longitude, int y, int m, int d, int tz, int pr)
+int do_spa(double latitude, double longitude, int altitude, int y, int m, int d, int tz, int pr)
 {
     spa_data spa;  //declare the SPA structure
     int result;
@@ -71,8 +72,8 @@ int do_spa(double latitude, double longitude, int y, int m, int d, int tz, int p
     spa.delta_t       = 0; //67;
     spa.longitude     = longitude; //11.35111; //12.09; //-105.1786;
     spa.latitude      = latitude; //47.25786; // 47.51; //39.742476;
-    spa.elevation     = 520; //1830.14;
-    spa.pressure      = 941; //820;
+    spa.elevation     = altitude; //1830.14;
+    spa.pressure      = 1013.0*pow(0.5, altitude/5536.0); //820;
     spa.temperature   = 11; //11;
     spa.slope         = 30;
     spa.azm_rotation  = -10;
