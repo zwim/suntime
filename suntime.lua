@@ -352,40 +352,32 @@ function SunTime:calculateTimeIter(height, hour)
 end
 
 function SunTime:calculateNoon()
-    self:initVars(12)
-    if self.pos.latitude >= 0 then -- northern hemisphere
-        if math.pi/2 - self.pos.latitude + self.decl > self.eod then
-            local dst = self.date.isdst and 1 or 0
-            local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
-            return 12 + local_correction
-        end
-    else -- sourthern hemisphere
-        if math.pi/2 + self.pos.latitude - self.decl > self.eod then
-            local dst = self.date.isdst and 1 or 0
-            local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
-            return 12 + local_correction
-        end
-    end
+    return self:calculateNoonMidnightHelper(12)
 end
 
 function SunTime:calculateMidnight()
-    -- 24 is the midnight at the end of the current day,
-    -- 00 would be the beginning of the day
-    self:initVars(24)
+    return self:calculateNoonMidnightHelper(24)
+end
+
+-- calculates noon or midnight
+-- hour:
+-- 00 would be the beginning of the day
+-- 12 is the noon of the current day
+-- 24 is the midnight at the end of the current day,
+function SunTime:calculateNoonMidnightHelper(hour)
+    self:initVars(hour)
+    local dst = self.date.isdst and 1 or 0
     if self.pos.latitude >= 0 then -- northern hemisphere
-        if math.pi/2 - self.pos.latitude - self.decl > self.eod then
-            local dst = self.date.isdst and 1 or 0
+        if math.pi/2 - self.pos.latitude + self.decl > self.eod then
             local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
-            return 24 + local_correction
-        end
-    else -- southern hemisphere
-        if math.pi/2 + self.pos.latitude + self.decl > self.eod then
-            local dst = self.date.isdst and 1 or 0
+            return hour + local_correction
+    end
+    else -- sourthern hemisphere
+        if math.pi/2 + self.pos.latitude - self.decl > self.eod then
             local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
-            return 24 + local_correction
+            return hour + local_correction
         end
     end
-
 end
 
 --[[--
