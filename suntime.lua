@@ -45,6 +45,7 @@ Maximal errors from 2020-2050 are:
 local toRad = math.pi/180
 local toDeg = 1/toRad
 
+local abs = math.abs
 local floor = math.floor
 local sin = math.sin
 local cos = math.cos
@@ -73,7 +74,7 @@ SunTime.civil = Rad(-6)
 SunTime.earth_flatten = 1 / 298.257223563 -- WGS84
 SunTime.average_temperature = 10 -- °C
 SunTime.aberration = asin(average_speed_earth/speed_of_light) -- Aberration relativistic
---SunTime.aberration = 0
+
 ----------------------------------------------------------------
 
 -- simple 'Equation of time' good for dates between 2008-2027
@@ -317,10 +318,28 @@ function SunTime:getTimeDiff(height)
     local val = (sin(height) - sin(self.pos.latitude)*sin(self.decl))
                 / (cos(self.pos.latitude)*cos(self.decl))
 
-    if math.abs(val) > 1 then
+    if abs(val) > 1 then
         return
     end
     return 12/math.pi * acos(val)
+end
+
+-- get the sun height for a given time
+-- set eod true, for considering sun diameter and astronomic refraction
+function SunTime:getHeight(time, eod)
+    time = time + 12 -- add 12, because JD starts at 12:00
+    local val = cos(self.decl)*cos(self.pos.latitude)*cos(math.pi/12*time)
+        + sin(self.decl)*sin(self.pos.latitude)
+
+    if abs(val) > 1 then
+        return
+    end
+
+    if eod then
+        return asin(val) - self.eod -- todo self.eod is a bit to small
+    else
+        return asin(val)
+    end
 end
 
 -- Get time for a certain height
@@ -359,34 +378,64 @@ function SunTime:calculateTimeIter(height, hour)
 end
 
 function SunTime:calculateNoon()
-    return self:calculateNoonMidnightHelper(12)
-end
-
-function SunTime:calculateMidnight()
-    return self:calculateNoonMidnightHelper(24)
-end
-
--- calculates noon or midnight
--- hour:
--- 00 would be the beginning of the day
--- 12 is the noon of the current day
--- 24 is the midnight at the end of the current day,
-function SunTime:calculateNoonMidnightHelper(hour)
+    local hour = 12
     self:initVars(hour)
     local dst = self.date.isdst and 1 or 0
+    local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
     if self.pos.latitude >= 0 then -- northern hemisphere
         if math.pi/2 - self.pos.latitude + self.decl > self.eod then
-            local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
-            return hour + local_correction
-    end
+            self:initVars(hour + local_correction)
+            local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
+            hour = hour + local_correction
+            self:initVars(hour)
+            if self:getHeight(hour, true) > 0 then
+                return hour
+            end
+        end
     else -- sourthern hemisphere
         if math.pi/2 + self.pos.latitude - self.decl > self.eod then
-            local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
-            return hour + local_correction
+            self:initVars(hour + local_correction)
+            local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
+            hour = hour + local_correction
+            self:initVars(hour)
+            if self:getHeight(hour, true) > 0 then
+                return hour
+            end
         end
     end
 end
 
+function SunTime:calculateMidnight()
+    -- hour:
+    -- 00 would be the beginning of the day
+    -- 24 is the midnight at the end of the current day,
+    local hour = 24
+    self:initVars(hour)
+    local dst = self.date.isdst and 1 or 0
+    local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
+    if self.pos.latitude >= 0 then -- northern hemisphere
+        if math.pi/2 - self.pos.latitude - self.decl > self.eod then
+            self:initVars(hour + local_correction)
+            local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
+            hour = hour + local_correction
+            self:initVars(hour)
+--            print("xxx mngt", hour,   self:getHeight(hour, true)*180/math.pi)
+            if self:getHeight(hour, true) < 0 then
+                return hour
+            end
+        end
+    else -- sourthern hemisphere
+        if math.pi/2 + self.pos.latitude + self.decl > self.eod then
+            self:initVars(hour + local_correction)
+            local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
+            hour = hour + local_correction
+            self:initVars(hour)
+            if self:getHeight(hour, true) < 0 then
+                return hour
+            end
+        end
+    end
+end
 --[[--
 Calculates the ephemeris and twilight times
 
@@ -438,6 +487,12 @@ function SunTime:calculateTimes()
 
     self.noon = self:calculateNoon()
     self.midnight = self:calculateMidnight()
+
+    if self.rise and not self.set then -- only sunrise on that day
+        self.midnight = nil
+    elseif self.set and not self.rise then -- only sunset on that day
+        self.noon = nil
+    end
 
     self.times = {}
     self.times[1]  = self.midnight and (self.midnight - 24)

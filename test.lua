@@ -6,17 +6,54 @@ Todo: usage
 
 local SunTime = require("suntime")
 
--- SunTime:setPosition("Casablanca", 33.58, -7.60, 1, 20, true)
--- SunTime:setPosition("Athene", 37.97, 23.73, 1, 50, true)
--- SunTime:setPosition("Rome", 41.91, 12.48, 1, 10, true)
--- SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
--- SunTime:setPosition("Berlin", 52.53387/180*math.pi, 13.37955/180*math.pi, 1, 100)
--- SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
--- SunTime:setPosition("Reykjavik", 64.14381/180*math.pi, -21.92626/180*math.pi, 0, 10)
- SunTime:setPosition("Akureyri", 65.6872/180*math.pi, -18.08651/180*math.pi, 0, 0)
--- SunTime:setPosition("Hammerfest", 70.66588, 23.67893, 1, 0, true)
--- SunTime:setPosition("Nordpol", 90/180*math.pi, 11/180*math.pi, 1, 100)
--- SunTime:setPosition("Südpol", -89.4/180*math.pi, 50/180*math.pi, 1, 100)
+local function usage(err)
+	print("usage: lua test.lua number ... show max error on position 'number'")
+	if err == 1 then
+		print("please enter a number for the first argument")
+	end
+end
+
+local test_position
+if arg[1] then
+	test_position = tonumber(arg[1])
+	if not test_position then
+		usage(1)
+		return
+	end
+end
+
+if test_position ~= nil and arg[2] == "" then
+	if test_position == 1 then
+		SunTime:setPosition("Casablanca", 33.58, -7.60, 1, 20, true)
+	elseif test_position == 2 then
+		SunTime:setPosition("Athene", 37.97, 23.73, 1, 50, true)
+	elseif test_position == 3 then
+		SunTime:setPosition("Rome", 41.91, 12.48, 1, 10, true)
+	elseif test_position == 4 then
+		SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
+	elseif test_position == 5 then
+		SunTime:setPosition("Berlin", 52.53387/180*math.pi, 13.37955/180*math.pi, 1, 100)
+	elseif test_position == 6 then
+		SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
+	elseif test_position == 7 then
+		SunTime:setPosition("Reykjavik", 64.14381/180*math.pi, -21.92626/180*math.pi, 0, 10)
+	elseif test_position == 8 then
+		SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
+	elseif test_position == 9 then
+		SunTime:setPosition("Hammerfest", 70.66588, 23.67893, 1, 0, true)
+	elseif test_position == 10 then
+		SunTime:setPosition("Nordpol", 88/180*math.pi, 0/180*math.pi, 0, 0)
+	elseif test_position == 11 then
+		SunTime:setPosition("Südpol", -89.4/180*math.pi, 0/180*math.pi, 0, 0)
+	else
+		print("position number to big")
+		return
+	end
+else
+	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
+	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
+--	SunTime:setPosition("Nordpol", 88/180*math.pi, 0/180*math.pi, 0, 0)
+end
 
 --SunTime:setSimple()
 SunTime:setAdvanced()
@@ -56,30 +93,6 @@ SunTime:setAdvanced()
 SunTime:setDate() -- today
 --SunTime:setDate(2021,12,11, false, 12,00,00) -- test
 
-print("\nadvanced calc")
-SunTime:calculateTimes()
-
-print("Position:      ", SunTime.name)
-printTime("Astronomisch:  ", SunTime.rise_astronomic)
-printTime("Nautisch:      ", SunTime.rise_nautic)
-printTime("Civil:         ", SunTime.rise_civil)
-printTime("Sonnenaufgang: ", SunTime.rise)
-
-printTime("Mittag:        ", SunTime.noon)
-
-printTime("Sonnenunterang:", SunTime.set)
-printTime("Civil:         ", SunTime.set_civil)
-printTime("Nautisch:      ", SunTime.set_nautic)
-printTime("Astronomisch:  ", SunTime.set_astronomic)
-
-printTime("Mitternacht:   ", SunTime.midnight)
-
-print("\nsimple calc")
-
-SunTime:setSimple()
-SunTime:setDate() -- today
---SunTime:setDate(2021,12,11, false, 12,00,00) -- test
-
 SunTime:calculateTimes()
 
 print("Position:      ", SunTime.name)
@@ -102,21 +115,16 @@ local dom = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 
 if arg[1] and arg[2] and arg[3] then
 	local yy, mm, dd = arg[1], arg[2], arg[3]
+	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
 	SunTime:setDate(yy, mm, dd, false)
-	SunTime.rise = SunTime:calculateTimeIter(SunTime.eod, 6)
-	SunTime.set = SunTime:calculateTimeIter(SunTime.eod, 18)
-
-	local a = math.floor(SunTime.rise)
-	local b = math.floor((SunTime.rise - a)*60)
-	local c = math.floor(SunTime.rise * 3600 + 1800) % 60
-
-	local d = math.floor(SunTime.set)
-	local e = math.floor((SunTime.set - d)*60)
-	local f = math.floor(SunTime.set * 3600 + 1800) % 60
+	SunTime:calculateTimes()
 
 	print( dd .. "." .. mm .. "." .. yy .. "    " ..
-		a .. ":" .. b .. ":" .. c .. "    " ..
-		d .. ":" .. e .. ":" .. f)
+		timeHMS(SunTime.rise) .. " " ..
+		timeHMS(SunTime.set) .. " " ..
+		timeHMS(SunTime.noon) .. " " ..
+		timeHMS(SunTime.midnight) .. " "
+		)
 else
 	function os.capture(cmd, raw)
 		local f = assert(io.popen(cmd, 'r'))
@@ -177,9 +185,9 @@ else
 					diff_set = spa_set - SunTime.set
 				end
 
-				if spa_set < spa_rise then
-					spa_set = spa_set + 24
-				end
+--				if spa_set < spa_rise then
+--					spa_set = spa_set + 24
+--				end
 
 				if diff_rise then
 					if diff_rise < -12 then
@@ -204,13 +212,15 @@ else
 					end
 				end
 
-				if y == 2021 then
+				if y == 2021 and not arg[1] then
 					-- times in fractions of a day
 					print(retval, "SunTime: " .. formatDate(y, m, d) .." ",
 						SunTime.rise and (timeHMS(SunTime.rise)),
 						SunTime.set and (timeHMS(SunTime.set)),
 						SunTime.noon and (timeHMS(SunTime.noon)),
+						SunTime.noon and SunTime:getHeight(SunTime.noon)*180/math.pi,
 						SunTime.midnight and (timeHMS(SunTime.midnight)),
+						SunTime.midnight and SunTime:getHeight(SunTime.midnight)*180/math.pi,
 						"Diff/sec: " .. round(diff_rise*3600) .. " " .. round(diff_set*3600))
 				end
 			end
