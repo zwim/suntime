@@ -11,9 +11,9 @@ local SunTime = require("suntime")
 -- SunTime:setPosition("Rome", 41.91, 12.48, 1, 10, true)
 -- SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
 -- SunTime:setPosition("Berlin", 52.53387/180*math.pi, 13.37955/180*math.pi, 1, 100)
- SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
+-- SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
 -- SunTime:setPosition("Reykjavik", 64.14381/180*math.pi, -21.92626/180*math.pi, 0, 10)
--- SunTime:setPosition("Akureyri", 65.6872/180*math.pi, -18.08651/180*math.pi, 0, 0)
+ SunTime:setPosition("Akureyri", 65.6872/180*math.pi, -18.08651/180*math.pi, 0, 0)
 -- SunTime:setPosition("Hammerfest", 70.66588, 23.67893, 1, 0, true)
 -- SunTime:setPosition("Nordpol", 90/180*math.pi, 11/180*math.pi, 1, 100)
 -- SunTime:setPosition("Südpol", -89.4/180*math.pi, 50/180*math.pi, 1, 100)
@@ -133,12 +133,12 @@ else
 
 	local rise_diff_sec = 0
 	local set_diff_sec = 0
-	for y = 2020, 2021 do
+	for y = 2020, 2050 do
 		for m = 1, 12 do
 			for d = 1, dom[m] do
 				local dst = false
 				if m > 3 and m < 10 then --quick and dirty daylight saving time
-					dst = true
+--					dst = true
 				end
 
 				local tz = SunTime.time_zone
@@ -217,5 +217,5 @@ else
 		end
 	end
 
-	print("Maximum error: " .. round(rise_diff_sec) .. " " .. round(set_diff_sec))
+	print("Maximum error for: " .. SunTime.pos.name .. " " .. round(rise_diff_sec) .. " " .. round(set_diff_sec))
 end

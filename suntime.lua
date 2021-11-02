@@ -9,12 +9,12 @@ Module to calculate ephemeris and other times depending on the sun position
 Maximal errors from 2020-2050 are:
 
 * 33.58° Casablanca:   24s
-* 37.97° Athene:       25s
-* 41.91° Rome:         28s
-* 47.25° Innsbruck:    14s
-* 52.32° Berlin:       32s
-* 59.92° Oslo:         39s
-* 64.14° Reykjavik:   113s
+* 37.97° Athene:       24s
+* 41.91° Rome:         27s
+* 47.25° Innsbruck:    13s
+* 52.32° Berlin:       30s
+* 59.92° Oslo:         43s
+* 64.14° Reykjavik:   104s
 * 65.69° Akureyri:   <110s (except *)
 * 70.67° Hammerfest: <105s (except **)
 
@@ -61,13 +61,18 @@ end
 
 local SunTime = {}
 
+local speed_of_light = 2.99792E8
+local average_speed_earth = 29.7859e3
+local sun_radius = 6.96342e8
+local average_earth_radius = 6371e3
+
 SunTime.astronomic = Rad(-18)
 SunTime.nautic =  Rad(-12)
 SunTime.civil = Rad(-6)
 -- SunTime.eod = Rad(-49/60) -- approx. end of day
 SunTime.earth_flatten = 1 / 298.257223563 -- WGS84
 SunTime.average_temperature = 10 -- °C
-SunTime.aberration = asin(30e3/3e8) -- Aberration relativistic
+SunTime.aberration = asin(average_speed_earth/speed_of_light) -- Aberration relativistic
 --SunTime.aberration = 0
 ----------------------------------------------------------------
 
@@ -169,7 +174,7 @@ function SunTime:setPosition(name, latitude, longitude, time_zone, altitude, deg
         longitude = -math.pi
     end
 
-    self.pos = {name, latitude = latitude, longitude = longitude, altitude = altitude}
+    self.pos = {name = name, latitude = latitude, longitude = longitude, altitude = altitude}
     self.time_zone = time_zone
 --    self.refract = Rad(36.35/60 * .5 ^ (altitude / 5538)) -- constant temperature
     self.refract = Rad(36.20/60 * (1 - 0.0065*altitude/(273.15+self.average_temperature)) ^ 5.255 )
@@ -291,15 +296,17 @@ function SunTime:initVars(hour)
 
     -- https://de.wikipedia.org/wiki/Kepler-Gleichung#Wahre_Anomalie
     self.E = self.M + self.num_ex * sin(self.M) + self.num_ex^2 / 2 * sin(2*self.M)
-    self.a = 149598022.96E3 -- große Halbachse in meter
+    self.a = 149598022.96E3 -- major semi-axis in meter
     self.r = self.a * (1 - self.num_ex * cos(self.E))
 
-    self.eod = -atan(6.96342e8/self.r) - self.refract
-    --                ^--sun radius            ^- astronomical refraction (at altitude)
+    --    self.eod = -atan(sun_radius/self.r) - self.refract
+    --                                            ^- astronomical refraction (at altitude)
 
     if after_noon then
+        self.eod = -atan((sun_radius-average_earth_radius*cos(self.pos.latitude))/self.r) - self.refract
         self.eod = self.eod + self.aberration
     else
+        self.eod = -atan((sun_radius+average_earth_radius*cos(self.pos.latitude))/self.r) - self.refract
         self.eod = self.eod - self.aberration
     end
 
