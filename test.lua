@@ -50,9 +50,12 @@ if test_position ~= nil and arg[2] == "" then
 		return
 	end
 else
+	SunTime:setPosition("Sacramento", 38, -121, 8, 0, true)
 	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
-	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
+--	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
 --	SunTime:setPosition("Nordpol", 88/180*math.pi, 0/180*math.pi, 0, 0)
+--	SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
+--	SunTime:setPosition("Reykjavik", 64.14381/180*math.pi, -21.92626/180*math.pi, 0, 10)
 end
 
 --SunTime:setSimple()
