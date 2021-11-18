@@ -14,7 +14,7 @@ Maximal errors from 2020-2050 are:
 * 47.25° Innsbruck:    13s
 * 52.32° Berlin:       30s
 * 59.92° Oslo:         43s
-* 64.14° Reykjavik:   104s
+* 64.14° Reykjavik:   103s
 * 65.69° Akureyri:   <110s (except *)
 * 70.67° Hammerfest: <105s (except **)
 
@@ -390,7 +390,7 @@ function SunTime:calculateNoon()
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
             self:initVars(hour)
-            if self:getHeight(hour, true) > 0 then
+            if self:getHeight(hour) > 0 then
                 return hour
             end
         end
@@ -400,7 +400,7 @@ function SunTime:calculateNoon()
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
             self:initVars(hour)
-            if self:getHeight(hour, true) > 0 then
+            if self:getHeight(hour) > 0 then
                 return hour
             end
         end
@@ -421,8 +421,7 @@ function SunTime:calculateMidnight()
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
             self:initVars(hour)
---            print("xxx mngt", hour,   self:getHeight(hour, true)*180/math.pi)
-            if self:getHeight(hour, true) < 0 then
+            if self:getHeight(hour) < 0 then
                 return hour
             end
         end
@@ -432,7 +431,7 @@ function SunTime:calculateMidnight()
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
             self:initVars(hour)
-            if self:getHeight(hour, true) < 0 then
+            if self:getHeight(hour) < 0 then
                 return hour
             end
         end
