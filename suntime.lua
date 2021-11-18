@@ -4,21 +4,23 @@
 -- The current source code of this file can be found on https://github.com/zwim/suntime.
 
 --[[--
-Module to calculate ephemeris and other times depending on the sun position
+Module to calculate ephemeris and other times depending on the sun position.
 
-Maximal errors from 2020-2050 are:
+Maximal errors from 2020-2050 (compared to https://midcdmz.nrel.gov/spa/) are:
 
+* -20.16° Mauritius:   19s
 * 33.58° Casablanca:   24s
 * 37.97° Athene:       24s
+* 38°    Sacramento:   90s
 * 41.91° Rome:         27s
 * 47.25° Innsbruck:    13s
 * 52.32° Berlin:       30s
-* 59.92° Oslo:         43s
-* 64.14° Reykjavik:   103s
-* 65.69° Akureyri:   <110s (except *)
+* 59.92° Oslo:         42s
+* 64.14° Reykjavik:    66s
+* 65.69° Akureyri:    <24s (except *)
 * 70.67° Hammerfest: <105s (except **)
 
-*) A few days around beginning of summer (error <530s)
+*) A few days around beginning of summer (error <290s)
 
 **) A few days after and befor midnight sun (error <1200s)
 
@@ -176,6 +178,8 @@ function SunTime:setPosition(name, latitude, longitude, time_zone, altitude, deg
     elseif longitude < -math.pi then
         longitude = -math.pi
     end
+
+    latitude = atan((1-self.earth_flatten)^2 * tan(latitude))
 
     self.pos = {name = name, latitude = latitude, longitude = longitude, altitude = altitude}
     self.time_zone = time_zone
