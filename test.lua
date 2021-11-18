@@ -54,15 +54,24 @@ if test_position ~= nil and arg[2] == nil then
 	elseif test_position == 12 then
 		SunTime:setPosition("Mauritius", -20.154, 57.502, 4, 0, true)
 	elseif test_position == 13 then
-		SunTime:setPosition("Sacramento", 58.573, -121.487, -8, 0, true)
+		SunTime:setPosition("Sacramento", 38.581, -121.489, -8, 0, true)
+	elseif test_position == 14 then
+		SunTime:setPosition("Honolulu", 21.305, -157.827, -8, 0, true)
+	elseif test_position == 15 then
+		SunTime:setPosition("Tokio", 35.681, 139.77, 9, 0, true)
+	elseif test_position == 16 then
+		SunTime:setPosition("Christchurch", -43.315, 172.623, 9, 0, true)
 	else
 		print("position number to big")
 		return
 	end
 else
---	SunTime:setPosition("Sacramento", 38, -121, 8, 0, true)
---	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
-	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
+--	SunTime:setPosition("Sacramento", 38.581, -121.489, -8, 0, true)
+--	SunTime:setPosition("Tokio", 35.681, 139.77, 9, 0, true)
+--	SunTime:setPosition("Christchurch", -43.315, 172.623, 9, 0, true)
+--	SunTime:setPosition("Honolulu", 21.305, -157.827, -8, 0, true)
+	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
+--	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
 --	SunTime:setPosition("Nordpol", 88/180*math.pi, 0/180*math.pi, 0, 0)
 --	SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
 --	SunTime:setPosition("Reykjavik", 64.14381/180*math.pi, -21.92626/180*math.pi, 0, 10)
@@ -159,7 +168,7 @@ else
 			for d = 1, dom[m] do
 				local dst = false
 				if m > 3 and m < 10 then --quick and dirty daylight saving time
---					dst = true
+					dst = true
 				end
 
 				local tz = SunTime.time_zone

@@ -8,10 +8,13 @@ Module to calculate ephemeris and other times depending on the sun position.
 
 Maximal errors from 2020-2050 (compared to https://midcdmz.nrel.gov/spa/) are:
 
-* -20.16° Mauritius:   19s
+* -43.52° Christchurch 66s
+* -20.16° Mauritius:   25s
+* 20.30° Honolulu:     47s
 * 33.58° Casablanca:   24s
+* 35.68° Tokio:        50s
 * 37.97° Athene:       24s
-* 38°    Sacramento:   90s
+* 38°    Sacramento:   67s
 * 41.91° Rome:         27s
 * 47.25° Innsbruck:    13s
 * 52.32° Berlin:       30s
