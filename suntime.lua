@@ -331,9 +331,9 @@ function SunTime:getTimeDiff(height)
 end
 
 -- get the sun height for a given time
--- set eod true, for considering sun diameter and astronomic refraction
+-- eod for considering sun diameter and astronomic refraction
 function SunTime:getHeight(time, eod)
-    time = time + 12 -- add 12, because JD starts at 12:00
+    time = time - 12 -- subtrace 12, because JD starts at 12:00
     local val = cos(self.decl)*cos(self.pos.latitude)*cos(math.pi/12*time)
         + sin(self.decl)*sin(self.pos.latitude)
 
@@ -342,7 +342,7 @@ function SunTime:getHeight(time, eod)
     end
 
     if eod then
-        return asin(val) - self.eod -- todo self.eod is a bit to small
+        return asin(val) - eod -- todo self.eod is a bit to small
     else
         return asin(val)
     end
@@ -393,7 +393,6 @@ function SunTime:calculateNoon()
             self:initVars(hour + local_correction)
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
-            self:initVars(hour)
             if self:getHeight(hour) > 0 then
                 return hour
             end
@@ -403,7 +402,6 @@ function SunTime:calculateNoon()
             self:initVars(hour + local_correction)
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
-            self:initVars(hour)
             if self:getHeight(hour) > 0 then
                 return hour
             end
@@ -411,11 +409,11 @@ function SunTime:calculateNoon()
     end
 end
 
-function SunTime:calculateMidnight()
+function SunTime:calculateMidnight(hour)
     -- hour:
     -- 00 would be the beginning of the day
     -- 24 is the midnight at the end of the current day,
-    local hour = 24
+    hour = hour or 24
     self:initVars(hour)
     local dst = self.date.isdst and 1 or 0
     local local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
@@ -424,7 +422,6 @@ function SunTime:calculateMidnight()
             self:initVars(hour + local_correction)
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
-            self:initVars(hour)
             if self:getHeight(hour) < 0 then
                 return hour
             end
@@ -434,7 +431,6 @@ function SunTime:calculateMidnight()
             self:initVars(hour + local_correction)
             local_correction = self.time_zone - self.pos.longitude*12/math.pi + dst - self.zgl
             hour = hour + local_correction
-            self:initVars(hour)
             if self:getHeight(hour) < 0 then
                 return hour
             end
@@ -492,15 +488,17 @@ function SunTime:calculateTimes()
 
     self.noon = self:calculateNoon()
     self.midnight = self:calculateMidnight()
+    self.midnight_beginning = self:calculateMidnight(0)
 
     if self.rise and not self.set then -- only sunrise on that day
         self.midnight = nil
+        self.midnight_beginning = nil
     elseif self.set and not self.rise then -- only sunset on that day
         self.noon = nil
     end
 
     self.times = {}
-    self.times[1]  = self.midnight and (self.midnight - 24)
+    self.times[1]  = self.midnight_beginning
     self.times[2]  = self.rise_astronomic
     self.times[3]  = self.rise_nautic
     self.times[4]  = self.rise_civil
