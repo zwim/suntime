@@ -3,6 +3,12 @@
 Todo: usage
 ]]
 
+-- profiler from https://github.com/charlesmallah/lua-profiler
+local Profiler = require("profiler")
+
+if Profiler then
+	Profiler.start()
+end
 
 local SunTime = require("suntime")
 
@@ -22,7 +28,7 @@ if arg[1] then
 	end
 end
 
-if test_position ~= nil and arg[2] == "" then
+if test_position ~= nil and arg[2] == nil then
 	if test_position == 1 then
 		SunTime:setPosition("Casablanca", 33.58, -7.60, 1, 20, true)
 	elseif test_position == 2 then
@@ -42,17 +48,21 @@ if test_position ~= nil and arg[2] == "" then
 	elseif test_position == 9 then
 		SunTime:setPosition("Hammerfest", 70.66588, 23.67893, 1, 0, true)
 	elseif test_position == 10 then
-		SunTime:setPosition("Nordpol", 88/180*math.pi, 0/180*math.pi, 0, 0)
+		SunTime:setPosition("North pole", 88/180*math.pi, 0/180*math.pi, 0, 0)
 	elseif test_position == 11 then
-		SunTime:setPosition("Südpol", -89.4/180*math.pi, 0/180*math.pi, 0, 0)
+		SunTime:setPosition("South pole", -89.4/180*math.pi, 0/180*math.pi, 0, 0)
+	elseif test_position == 12 then
+		SunTime:setPosition("Mauritius", -20.154, 57.502, 4, 0, true)
+	elseif test_position == 13 then
+		SunTime:setPosition("Sacramento", 58.573, -121.487, -8, 0, true)
 	else
 		print("position number to big")
 		return
 	end
 else
-	SunTime:setPosition("Sacramento", 38, -121, 8, 0, true)
-	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
---	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
+--	SunTime:setPosition("Sacramento", 38, -121, 8, 0, true)
+--	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
+	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
 --	SunTime:setPosition("Nordpol", 88/180*math.pi, 0/180*math.pi, 0, 0)
 --	SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
 --	SunTime:setPosition("Reykjavik", 64.14381/180*math.pi, -21.92626/180*math.pi, 0, 10)
@@ -232,3 +242,9 @@ else
 
 	print("Maximum error for: " .. SunTime.pos.name .. " " .. round(rise_diff_sec) .. " " .. round(set_diff_sec))
 end
+
+if Profiler then
+	Profiler.stop()
+	Profiler.report("profiler.log")
+end
+
