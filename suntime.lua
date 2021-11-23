@@ -109,13 +109,12 @@ function SunTime:getZglAdvanced()
     local e4 = e3*e
     local e5 = e4*e
 
-    local M = self.M
     -- https://de.wikibooks.org/wiki/Astronomische_Berechnungen_f%C3%BCr_Amateure/_Himmelsmechanik/_Sonne
-    local C = (2*e - e3/4 + 5/96*e5) * sin(M)
-            + (5/4*e2 + 11/24*e4) * sin(2*M)
-            + (13/12*e3 - 43/64*e5) * sin(3*M)
-            + 103/96*e4 * sin(4*M)
-            + 1097/960*e5 * sin(5*M) -- rad
+    local C = (2*e - e3/4 + 5/96*e5) * self.sin_M
+            + (5/4*e2 + 11/24*e4) * self.sin_2M
+            + (13/12*e3 - 43/64*e5) * self.sin_3M
+            + 103/96*e4 * self.sin_4M
+            + 1097/960*e5 * self.sin_5M -- rad
 
     local lamb = self.L + C
     local tanL = tan(self.L)
@@ -277,6 +276,21 @@ function SunTime:initVars(hour)
     local M = L - omega --°
     self.M = (M - floor(M/360)*360) * toRad
 
+    self.sin_M = sin(self.M)
+    self.cos_M = cos(self.M)
+
+    -- sin(2x)=2 sin(x) cos(x)
+    self.sin_2M = 2 * self.sin_M * self.cos_M
+
+    -- sin(3x) = 3 sin(x) − 4 sin(x)^3
+    self.sin_3M = 3 * self.sin_M - 4 * self.sin_M^3
+
+    -- sin(4x) = 8 sin(x) cos(x)^3 - 4 sin(x) cos(x)
+    self.sin_4M = 8 * self.sin_M * self.cos_M^3 - 4 * self.sin_M * self.cos_M
+
+    -- sin(5x) = 5 sin(x) - 20 sin(x)^3+ 16 sin(x)^5
+    self.sin_5M = 5 * self.sin_M - 20 * self.sin_M^3 + 16 * self.sin_M^5
+
     -- Deklination nach astronomie.info
     --  local decl = 0.4095 * sin(0.016906 * (self.date.yday - 80.086))
     --Deklination nach Brodbeck (2001)
@@ -294,7 +308,7 @@ function SunTime:initVars(hour)
     --self.decl = asin(sin(ep)*sin(l))
 
     -- Deklination WMO-No.8 page I-7-37
-    local l =  self.L + pi + (1.915 * sin (self.M) + 0.020 * sin (2*self.M))*toRad
+    local l =  self.L + pi + (1.915 * self.sin_M + 0.020 * self.sin_2M)*toRad
     self.decl = asin(sin(self.epsilon)*sin(l))
 
     -- Nutation see https://de.wikipedia.org/wiki/Nutation_(Astronomie)
@@ -315,7 +329,7 @@ function SunTime:initVars(hour)
     self.decl = self.decl + delta_epsilon/3600*toRad
 
     -- https://de.wikipedia.org/wiki/Kepler-Gleichung#Wahre_Anomalie
-    self.E = self.M + self.num_ex * sin(self.M) + self.num_ex^2 / 2 * sin(2*self.M)
+    self.E = self.M + self.num_ex * self.sin_M + self.num_ex^2 / 2 * self.sin_2M
     self.r = semimajor_axis * (1 - self.num_ex * cos(self.E))
 
     --    self.eod = -atan(sun_radius/self.r) - self.refract
