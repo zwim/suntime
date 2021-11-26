@@ -376,35 +376,45 @@ end
 
 -- Get time for a certain height
 -- Set hour near to expected time
--- Sed after_noon to true, if sunset is wanted
+-- Set after_noon to true, if sunset is wanted
+-- Set no_correct_dst if no daylight saving correction is wanted
 -- Result rise or set time
 --        nil sun does not reach the height
-function SunTime:calculateTime(height, hour, after_noon)
-    local timeDiff = self:getTimeDiff(height, hour)
+function SunTime:calculateTime(height, hour, after_noon, no_correct_dst)
+    self:initVars(hour) -- calculate self.eod
+    local timeDiff = self:getTimeDiff(height or self.eod, hour)
     if not timeDiff then
         return
     end
 
     local local_correction = self.time_zone - self.pos.longitude*12/pi - self.zgl
     if not after_noon then
-        return 12 - timeDiff + local_correction
+        hour = 12 - timeDiff + local_correction
     else
-        return 12 + timeDiff + local_correction
+        hour = 12 + timeDiff + local_correction
     end
+    if not no_correct_dst then
+        if self.date.isdst and hour then
+            hour = hour + 1
+        end
+    end
+    return hour
 end
 
+-- Calculates the hour, when the sun reaches height
 -- If height is nil, use newly calculated self.eod
-function SunTime:calculateTimeIter(height, hour)
-    local after_noon = hour > 12
+-- hour gives a start value, default is used when hour == nil
+function SunTime:calculateTimeIter(height, hour, default_hour)
+    local after_noon = (hour and hour > 12) or (default_hour and default_hour > 12)
 
-    self:initVars(hour) -- calculate self.eod
-    hour = self:calculateTime(height or self.eod, hour, after_noon)
-    if hour ~= nil then
-        self:initVars(hour)  -- calculate self.eod
+    if not hour then -- do the iteration with the default value
+        hour = self:calculateTime(height or self.eod, default_hour, after_noon, true)
+    elseif hour and not default_hour then -- do the full iteration with value
+        hour = self:calculateTime(height or self.eod, hour, after_noon, true)
+    end -- if hour and default_hour are given don't do the first step
+
+    if hour ~= nil then -- do the last calculation step
         hour = self:calculateTime(height or self.eod, hour, after_noon)
-    end
-    if self.date.isdst and hour then
-        return hour + 1
     end
     return hour
 end
@@ -501,7 +511,12 @@ Or as values in a table:
 --]]--
 function SunTime:calculateTimes()
     -- All or some the times can be nil at great latitudes
-    -- but either noon or midnight is not nil!
+    -- but either noon or midnight is not nil
+
+local exact_twilight = true
+
+if exact_twilight then
+    -- The canonical way is to calculate everything from scratch
     self.rise = self:calculateTimeIter(nil, 6)
     self.set = self:calculateTimeIter(nil, 18)
 
@@ -511,10 +526,22 @@ function SunTime:calculateTimes()
     self.set_nautic = self:calculateTimeIter(self.nautic, 18)
     self.rise_astronomic = self:calculateTimeIter(self.astronomic, 6)
     self.set_astronomic = self:calculateTimeIter(self.astronomic, 18)
+else
+    -- Calculate rise and set from scratch, use these values for twilight times
+    self.rise = self:calculateTimeIter(nil, 6)
+    self.rise_civil = self:calculateTimeIter(self.civil, self.rise, 6)
+    self.rise_nautic = self:calculateTimeIter(self.nautic, self.rise_civil, 6)
+    self.rise_astronomic = self:calculateTimeIter(self.rise_nautic, 6)
 
+    self.set = self:calculateTimeIter(nil, 18)
+    self.set_civil = self:calculateTimeIter(self.civil, self.set, 18)
+    self.set_nautic = self:calculateTimeIter(self.nautic, self.set_civil, 18)
+    self.set_astronomic = self:calculateTimeIter(self.astronomic, self.set_nautic, 18)
+end
+
+    self.midnight_beginning = self:calculateMidnight(0)
     self.noon = self:calculateNoon()
     self.midnight = self:calculateMidnight()
-    self.midnight_beginning = self:calculateMidnight(0)
 
     -- Sometimes at high latitudes noon or midnight does not get calculated.
     -- Maybe there is a minor bug in the calculateNoon/calculateMidnight functions.
