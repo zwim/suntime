@@ -76,6 +76,11 @@ local aberration = asin(average_speed_earth/speed_of_light) -- Aberration relati
 local average_speed_equator = (2*pi * average_earth_radius) / (24*3600)
 --------------------------------------------
 
+ -- minimal twillight times in hours
+local min_civil_twilight = 20/60
+local min_nautic_twilight = 45/60 - min_civil_twilight
+local min_astronomic_twilight = 20/60 - min_nautic_twilight
+
 local SunTime = {
         astronomic = Rad(-18),
         nautic =  Rad(-12),
@@ -382,6 +387,11 @@ end
 -- Result rise or set time
 --        nil sun does not reach the height
 function SunTime:calculateTime(height, hour, after_noon, no_correct_dst)
+    if not no_correct_dst then
+        if self.date.isdst and hour then
+            hour = hour - 1
+        end
+    end
     self:initVars(hour) -- calculate self.eod
     local timeDiff = self:getTimeDiff(height or self.eod, hour)
     if not timeDiff then
@@ -464,11 +474,15 @@ function SunTime:calculateMidnight(hour)
         end
     end
 end
+
 --[[--
 Calculates the ephemeris and twilight times
 
+@param exact_twilight If not nil, then exact twilight times will be calculated.
+
 @usage
-SunTime:calculateTime()
+SunTime:calculateTimes(exact_twilight)
+
 
 Times are in hours or `nil` if not applicable.
 
@@ -502,13 +516,11 @@ Or as values in a table:
     self.times[10] set_astronomic
     self.times[11] midnight
 --]]--
-function SunTime:calculateTimes()
+function SunTime:calculateTimes(fast_twilight)
     -- All or some the times can be nil at great latitudes
     -- but either noon or midnight is not nil
 
-local exact_twilight = true
-
-if exact_twilight then
+if not fast_twilight then
     -- The canonical way is to calculate everything from scratch
     self.rise = self:calculateTimeIter(nil, 6)
     self.set = self:calculateTimeIter(nil, 18)
@@ -522,14 +534,14 @@ if exact_twilight then
 else
     -- Calculate rise and set from scratch, use these values for twilight times
     self.rise = self:calculateTimeIter(nil, 6)
-    self.rise_civil = self:calculateTimeIter(self.civil, self.rise, 6)
-    self.rise_nautic = self:calculateTimeIter(self.nautic, self.rise_civil, 6)
-    self.rise_astronomic = self:calculateTimeIter(self.rise_nautic, 6)
+    self.rise_civil = self:calculateTimeIter(self.civil, self.rise - min_civil_twilight, 6)
+    self.rise_nautic = self:calculateTimeIter(self.nautic, self.rise_civil - min_nautic_twilight, 6)
+    self.rise_astronomic = self:calculateTimeIter(self.astronomic, self.rise_nautic - min_astronomic_twilight, 6)
 
     self.set = self:calculateTimeIter(nil, 18)
-    self.set_civil = self:calculateTimeIter(self.civil, self.set, 18)
-    self.set_nautic = self:calculateTimeIter(self.nautic, self.set_civil, 18)
-    self.set_astronomic = self:calculateTimeIter(self.astronomic, self.set_nautic, 18)
+    self.set_civil = self:calculateTimeIter(self.civil, self.set + min_civil_twilight, 18)
+    self.set_nautic = self:calculateTimeIter(self.nautic, self.set_civil + min_nautic_twilight, 18)
+    self.set_astronomic = self:calculateTimeIter(self.astronomic, self.set_nautic + min_astronomic_twilight, 18)
 end
 
     self.midnight_beginning = self:calculateMidnight(0)
