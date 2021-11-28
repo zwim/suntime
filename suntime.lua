@@ -68,11 +68,12 @@ end
 
 --------------------------------------------
 local speed_of_light = 2.99792E8
-local average_speed_earth = 29.7859e3
 local sun_radius = 6.96342e8
 local average_earth_radius = 6371e3
 local semimajor_axis = 149598022.96E3 -- earth orbit's major semi-axis in meter
+local average_speed_earth = 29.7859e3
 local aberration = asin(average_speed_earth/speed_of_light) -- Aberration relativistic
+local average_speed_equator = (2*pi * average_earth_radius) / (24*3600)
 --------------------------------------------
 
 local SunTime = {
@@ -419,27 +420,22 @@ function SunTime:calculateTimeIter(height, hour, default_hour)
     return hour
 end
 
-function SunTime:calculateNoon()
-    local hour = 12
+function SunTime:calculateNoon(hour)
+    hour = hour or 12
     self:initVars(hour)
+    local aberration_time = aberration / pi * 12 -- aberration in hours (angle/(2pi)*24)
     local dst = self.date.isdst and 1 or 0
     local local_correction = self.time_zone - self.pos.longitude*12/pi + dst - self.zgl
     if self.pos.latitude >= 0 then -- northern hemisphere
         if pi_2 - self.pos.latitude + self.decl > self.eod then
-            self:initVars(hour + local_correction)
-            local_correction = self.time_zone - self.pos.longitude*12/pi + dst - self.zgl
-            hour = hour + local_correction
             if self:getHeight(hour) > 0 then
-                return hour
+                return hour + local_correction + aberration_time
             end
         end
     else -- sourthern hemisphere
         if pi_2 + self.pos.latitude - self.decl > self.eod then
-            self:initVars(hour + local_correction)
-            local_correction = self.time_zone - self.pos.longitude*12/pi + dst - self.zgl
-            hour = hour + local_correction
             if self:getHeight(hour) > 0 then
-                return hour
+                return hour + local_correction + aberration_time
             end
         end
     end
@@ -452,23 +448,18 @@ function SunTime:calculateMidnight(hour)
     hour = hour or 24
     self:initVars(hour)
     local dst = self.date.isdst and 1 or 0
+    -- no aberration correction here, as you can't see the sun on her nadir ;-)
     local local_correction = self.time_zone - self.pos.longitude*12/pi + dst - self.zgl
     if self.pos.latitude >= 0 then -- northern hemisphere
         if pi_2 - self.pos.latitude - self.decl > self.eod then
-            self:initVars(hour + local_correction)
-            local_correction = self.time_zone - self.pos.longitude*12/pi + dst - self.zgl
-            hour = hour + local_correction
             if self:getHeight(hour) < 0 then
-                return hour
+                return hour + local_correction
             end
         end
     else -- sourthern hemisphere
         if pi_2 + self.pos.latitude + self.decl > self.eod then
-            self:initVars(hour + local_correction)
-            local_correction = self.time_zone - self.pos.longitude*12/pi + dst - self.zgl
-            hour = hour + local_correction
             if self:getHeight(hour) < 0 then
-                return hour
+                return hour + local_correction
             end
         end
     end
@@ -482,6 +473,8 @@ SunTime:calculateTime()
 Times are in hours or `nil` if not applicable.
 
 You can then access:
+    self.midnight_beginning
+
     self.rise_astronomic
     self.rise_nautic
     self.rise_civil
@@ -497,7 +490,7 @@ You can then access:
     self.midnight
 
 Or as values in a table:
-    self.times[1]  midnight - 24h
+    self.times[1]  midnight_beginning
     self.times[2]  rise_astronomic
     self.times[3]  rise_nautic
     self.times[4]  rise_civil

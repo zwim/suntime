@@ -70,7 +70,8 @@ else
 --	SunTime:setPosition("Tokio", 35.681, 139.77, 9, 0, true)
 --	SunTime:setPosition("Christchurch", -43.315, 172.623, 9, 0, true)
 --	SunTime:setPosition("Honolulu", 21.305, -157.827, -8, 0, true)
-	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
+--	SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)
+	SunTime:setPosition("Berlin", 52.53387/180*math.pi, 13.37955/180*math.pi, 1, 100)
 --	SunTime:setPosition("Akureyri", 65.689/180*math.pi, -18.101/180*math.pi, 0, 0)
 --	SunTime:setPosition("Nordpol", 88/180*math.pi, 0/180*math.pi, 0, 0)
 --	SunTime:setPosition("Oslo", 59.91853, 10.75567, 1, 0, true)
@@ -254,6 +255,6 @@ end
 
 if Profiler then
 	Profiler.stop()
-	Profiler.report("profiler.log")
+	Profiler.report("test-profiler.log")
 end
 
