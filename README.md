@@ -27,7 +27,7 @@ See `example.lua` for an example.
 
 1.) Set your position:
 
-` SunTime:setPosition(name, latitude, longitude, timezone, height, true)`
+` SunTime:setPosition(name, latitude, longitude, timezone, height, decimal)`
 
 Coordinates in decimal degree:
 ` SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)`
