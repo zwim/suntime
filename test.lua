@@ -86,9 +86,7 @@ local function timeHMS(time)
 		local h = math.floor(time)
 		local m = math.floor((time - h) * 60)
 		local s = math.floor(time*3600-h*3600-m*60)
-		return string.format("%02d",h) .. ":"
-			.. string.format("%02d",m) .. ":"
-			.. string.format("%02d",s)
+		return string.format("%02d:%02d:%02d", h, m, s)
 	else
 		return "none"
 	end
