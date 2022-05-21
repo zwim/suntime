@@ -32,10 +32,8 @@ See `example.lua` for an example.
 Coordinates in decimal degree:
 ` SunTime:setPosition("Innsbruck Flughafen", 47.25786, 11.35111, 1, 578, true)`
 
-
 or coordinates in radiant:
 ` SunTime:setPosition("Innsbruck Flughafen", 47.25786/180*math.pi, 11.35111/180*math.pi, 1, 578)`
-
 
 2.) Optionally select equation of time:
 
@@ -86,3 +84,9 @@ Times are decimal hours, so `12.5` is `12:30:00`. If a time does not exist the v
     self.times[10] = self.set_astronomic
     self.times[11] = self.midnight
 ```
+
+## Used by
+KOReader: http://koreader.rocks/
+
+## License
+See #LICENSE file
