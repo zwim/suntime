@@ -89,4 +89,4 @@ Times are decimal hours, so `12.5` is `12:30:00`. If a time does not exist the v
 KOReader: http://koreader.rocks/
 
 ## License
-See #LICENSE file
+See https://github.com/zwim/suntime/blob/master/LICENSE
