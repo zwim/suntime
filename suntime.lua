@@ -580,17 +580,18 @@ end
     self.times[11] = self.midnight
 end
 
--- Get time in seconds (either actual time in hours or date struct)
+-- Get time in seconds, rounded to ms (either actual time in hours or date struct)
 function SunTime:getTimeInSec(val)
     if not val then
         val = os.date("*t")
     end
 
     if type(val) == "table" then
-        return val.hour*3600 + val.min*60 + val.sec
+        val = val.hour*3600 + val.min*60 + val.sec
+    else
+        val = val*3600
     end
-
-    return val*3600
+    return math.floor(val * 1000 ) / 1000
 end
 
 return SunTime
