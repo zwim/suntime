@@ -557,8 +557,10 @@ end
         if not self.midnight then
             self.midnight = self.noon + 12
         end
-        if not self.midnight_beginning then
+        if not self.midnight_beginning and self.midnight then
             self.midnight_beginning = self.midnight - 24
+        elseif not self.midnight and not self.midnight_beginning then
+            self.midnight = self.midnight_beginning + 24
         end
     elseif self.rise and not self.set then -- only sunrise on that day
         self.midnight = nil
