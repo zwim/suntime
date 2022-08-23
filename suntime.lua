@@ -374,7 +374,7 @@ function SunTime:getHeight(time, eod)
     end
 
     if eod then
-        return asin(val) - eod -- todo self.eod is a bit to small
+        return asin(val) - eod -- self.eod might be a bit too small
     else
         return asin(val)
     end
@@ -551,10 +551,10 @@ end
     -- Sometimes at high latitudes noon or midnight does not get calculated.
     -- Maybe there is a minor bug in the calculateNoon/calculateMidnight functions.
     if self.rise and self.set then
-        if not self.noon then
+        if not self.noon and self.rise and self.set then
             self.noon = (self.rise + self.set) / 2
         end
-        if not self.midnight then
+        if not self.midnight and self.noon then
             self.midnight = self.noon + 12
         end
         if not self.midnight_beginning and self.midnight then
