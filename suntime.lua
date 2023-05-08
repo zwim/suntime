@@ -1,9 +1,8 @@
-
+--[[--
 -- Author: Martin Zwicknagl (zwim)
 -- Date: 2021-10-29
 -- The current source code of this file can be found on https://github.com/zwim/suntime.
 
---[[--
 Module to calculate ephemeris and other times depending on the sun position.
 
 Maximal errors from 2020-2050 (compared to https://midcdmz.nrel.gov/spa/) are:
@@ -73,7 +72,7 @@ local average_earth_radius = 6371e3
 local semimajor_axis = 149598022.96E3 -- earth orbit's major semi-axis in meter
 local average_speed_earth = 29.7859e3
 local aberration = asin(average_speed_earth/speed_of_light) -- Aberration relativistic
-local average_speed_equator = (2*pi * average_earth_radius) / (24*3600)
+-- local average_speed_equator = (2*pi * average_earth_radius) / (24*3600)
 --------------------------------------------
 
  -- minimal twillight times in hours
@@ -479,10 +478,10 @@ end
 --[[--
 Calculates the ephemeris and twilight times
 
-@param exact_twilight If not nil, then exact twilight times will be calculated.
+@param fast_twilight If not nil, then exact twilight times will be calculated.
 
 @usage
-SunTime:calculateTimes(exact_twilight)
+SunTime:calculateTimes(fast_twilight)
 
 
 Times are in hours or `nil` if not applicable.
@@ -594,7 +593,7 @@ function SunTime:getTimeInSec(val)
     else
         val = val*3600
     end
-    return math.floor(val * 1000 ) / 1000
+    return math.floor(val * 1000) * (1/1000)
 end
 
 -- Get the timezone offset in hours (including dst).
