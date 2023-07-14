@@ -46,6 +46,9 @@ Optional:
 `SunTime:setSimple() -- simple version valid for 2008-2027`
 
 3.) Set date
+`SunTime:setDate() -- use system settings`
+
+or
 
 `SunTime:setDate(y, m, d, dst)`
 
