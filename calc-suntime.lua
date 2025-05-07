@@ -12,11 +12,15 @@ long = long or 12.12
 alt = alt or 500
 tz = tz or ""
 
-local tz_pos = tz:find(":")
-if tz_pos then
-    tz = tonumber(tz:sub(1, tz_pos-1) + tonumber(tz:sub(tz_pos+1) / 60))
-else
-    tz = tonumber(tz)
+-- when called from commandline tz is a string,
+-- when called form C tz is a double
+if type(tz) == "string" then
+	local tz_pos = tz:find(":")
+	if tz_pos then
+		tz = tonumber(tz:sub(1, tz_pos-1) + tonumber(tz:sub(tz_pos+1) / 60))
+	else
+		tz = tonumber(tz)
+	end
 end
 
 print(yy, mm, dd, tz, dst, lat, long, alt)
@@ -69,3 +73,5 @@ print("    Civil tusk:   " .. timeHMS(SunTime.set_civil))
 print("    Nautic tusk:  " .. timeHMS(SunTime.set_nautic))
 print("    Astron. tusk: " .. timeHMS(SunTime.set_astronomic))
 print("Solar midnight:   " .. timeHMS(SunTime.midnight))
+
+return SunTime.times -- so that we can read that in C
