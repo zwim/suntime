@@ -76,9 +76,9 @@ local aberration = asin(average_speed_earth/speed_of_light) -- Aberration relati
 --------------------------------------------
 
  -- minimal twillight times in hours
-local min_civil_twilight = 20/60
-local min_nautic_twilight = 45/60 - min_civil_twilight
-local min_astronomic_twilight = 20/60 - min_nautic_twilight
+local min_civil_twilight = 20./60
+local min_nautic_twilight = 45./60 - min_civil_twilight
+local min_astronomic_twilight = 20./60 - min_nautic_twilight
 
 local SunTime = {
         astronomic = Rad(-18),
@@ -86,7 +86,7 @@ local SunTime = {
         civil = Rad(-6),
         -- eod = Rad(-49/60), -- approx. end of day
         earth_flatten = 1 / 298.257223563, -- WGS84
-        average_temperature = 10, -- °C
+        average_temperature = 10., -- °C
 
         times = {},
     }
@@ -596,12 +596,59 @@ function SunTime:getTimeInSec(val)
     return math.floor(val * 1000) * (1/1000)
 end
 
+-- Get time in hours, rounded to ms
+function SunTime:getTimeInHours(val)
+    return self:getTimeInSec(val) * (1/3600)
+end
+
 -- Get the timezone offset in hours (including dst).
  function SunTime:getTimezoneOffset()
     local now_ts = os.time()
     local utcdate   = os.date("!*t", now_ts)
     local localdate = os.date("*t", now_ts)
     return os.difftime(os.time(localdate), os.time(utcdate)) * (1/3600)
+end
+
+function SunTime:isDayTime(time)
+    if not self.rise or not self.set then return false end -- no time calculated, or time does not exist
+    time = time or self:getTimeInHours()
+    if self.rise < time and time < self.set then
+        return true
+    end
+    return false
+end
+
+function SunTime:isCivilTwilight(time)
+    if not self.rise_civil or not self.set_civil then return false end -- no time calculated, or time does not exist
+    time = time or self:getTimeInHours()
+    if self.isDayTime(time) then
+        return false
+    elseif self.rise_civil < time and time < self.set_civil then
+        return true
+    end
+    return false
+end
+
+function SunTime:isNauticTwilight(time)
+    if not self.rise_nautic or not self.set_nautic then return false end -- no time calculated, or time does not exist
+    time = time or self:getTimeInHours()
+    if self.isCivilTwilight(time) then
+        return false
+    elseif self.rise_nautic < time and time < self.set_nautic then
+        return true
+    end
+    return false
+end
+
+function SunTime:isAstronomicTwilight(time)
+    if not self.rise_astronomic or not self.set_actronomic then return false end -- no time calculated, or time does not exist
+    time = time or self:getTimeInHours()
+    if self.isNauticTwilight(time) then
+        return false
+    elseif self.rise_astronomic < time and time < self.set_astronomic then
+        return true
+    end
+    return false
 end
 
 return SunTime
